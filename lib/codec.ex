@@ -51,7 +51,7 @@ defmodule Calibex.Codec do
       |> String.replace(~r/[\r|\n]/, "\\n")
       |> split_line()
 
-    str_left <> "\r\n " <> encode_line(str_right)
+    str_left <> "\r\n" <> encode_line(" " <> str_right)
   end
 
   def split_line(bin) do
