@@ -23,9 +23,9 @@ defmodule Calibex.Codec do
   end
   def encode_line("BEGIN:"<>_=bin), do: bin #DO NOT encode block values
   def encode_line(bin) do
-    if String.length(bin) <= 75 do bin else
+    if String.length(bin) <= 73 do bin else
       bin = String.replace(bin,~r/[\r|\n]/,"\\n")
-      {str_left,str_right} = String.split_at(bin,75)
+      {str_left,str_right} = String.split_at(bin,73)
       str_left <> "\r\n " <> encode_line(str_right)
     end
   end
