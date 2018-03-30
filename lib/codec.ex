@@ -43,7 +43,7 @@ defmodule Calibex.Codec do
 
   # DO NOT encode block values
   def encode_line("BEGIN:" <> _ = bin), do: bin
-  def encode_line(bin) when byte_size(bin) <= 75, do: bin
+  def encode_line(bin) when byte_size(bin) < 75, do: bin
 
   def encode_line(bin) do
     {str_left, str_right} =
@@ -59,7 +59,7 @@ defmodule Calibex.Codec do
       bin
       |> String.graphemes()
       |> Enum.reduce_while("", fn c, acc ->
-        if byte_size(acc) <= 75, do: {:cont, acc <> c}, else: {:halt, acc}
+        if byte_size(acc) < 75, do: {:cont, acc <> c}, else: {:halt, acc}
       end)
 
     String.split_at(bin, String.length(str_left))
