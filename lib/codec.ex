@@ -11,7 +11,9 @@ defmodule Calibex.Codec do
 
   # encode kwlist with limited length lines
   def encode_value([{_k, _v} | _] = props) do
-    props |> Enum.map(&(&1 |> encode_value() |> encode_line())) |> Enum.join("\r\n")
+    props
+    |> Enum.map(&(&1 |> encode_value() |> escape_newlines |> encode_line()))
+    |> Enum.join("\r\n")
   end
 
   # encode value with properties
@@ -39,17 +41,28 @@ defmodule Calibex.Codec do
     k |> to_string() |> String.replace("_", "-") |> String.upcase()
   end
 
+  def escape_newlines(bin) do
+    String.replace(bin, ~r/[\r|\n]/, "\\n")
+  end
+
   # DO NOT encode block values
   def encode_line("BEGIN:" <> _ = bin), do: bin
+  def encode_line(bin) when byte_size(bin) < 75, do: bin
 
   def encode_line(bin) do
-    if String.length(bin) <= 73 do
+    {str_left, str_right} = split_line(bin)
+    str_left <> "\r\n " <> encode_line(str_right)
+  end
+
+  def split_line(bin) do
+    str_left =
       bin
-    else
-      bin = String.replace(bin, ~r/[\r|\n]/, "\\n")
-      {str_left, str_right} = String.split_at(bin, 73)
-      str_left <> "\r\n " <> encode_line(str_right)
-    end
+      |> String.graphemes()
+      |> Enum.reduce_while("", fn c, acc ->
+        if byte_size(acc) < 75, do: {:cont, acc <> c}, else: {:halt, acc}
+      end)
+
+    String.split_at(bin, String.length(str_left))
   end
 
   def decode(bin), do: bin |> decode_lines |> decode_blocks
