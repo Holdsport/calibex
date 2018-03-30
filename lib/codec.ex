@@ -12,7 +12,7 @@ defmodule Calibex.Codec do
   # encode kwlist with limited length lines
   def encode_value([{_k, _v} | _] = props) do
     props
-    |> Enum.map(&(&1 |> encode_value() |> escape_newlines |> encode_line()))
+    |> Enum.map(&(&1 |> encode_value() |> encode_line()))
     |> Enum.join("\r\n")
   end
 
@@ -41,16 +41,16 @@ defmodule Calibex.Codec do
     k |> to_string() |> String.replace("_", "-") |> String.upcase()
   end
 
-  def escape_newlines(bin) do
-    String.replace(bin, ~r/[\r|\n]/, "\\n")
-  end
-
   # DO NOT encode block values
   def encode_line("BEGIN:" <> _ = bin), do: bin
   def encode_line(bin) when byte_size(bin) < 75, do: bin
 
   def encode_line(bin) do
-    {str_left, str_right} = split_line(bin)
+    {str_left, str_right} =
+      bin
+      |> String.replace(~r/[\r|\n]/, "\\n")
+      |> split_line()
+
     str_left <> "\r\n " <> encode_line(str_right)
   end
 
